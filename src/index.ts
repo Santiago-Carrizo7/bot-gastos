@@ -15,6 +15,7 @@ import { OpenAICompatibleSTTProvider } from './ai/stt/openai-compatible-stt.prov
 import { SpeechToTextService } from './ai/stt/stt.service.js';
 import { ExpenseParser } from './ai/expense-parser.js';
 import { createBot } from './bot/index.js';
+import { BOT_MENU_COMMANDS } from './bot/handlers/commands.js';
 import { createExpressApp } from './api/server.js';
 
 async function bootstrap() {
@@ -110,8 +111,12 @@ async function bootstrap() {
   process.once('SIGINT', () => shutdown('SIGINT'));
   process.once('SIGTERM', () => shutdown('SIGTERM'));
 
-  // 9. Iniciar bot (long polling)
+  // 9. Iniciar bot (long polling) y registrar menú de comandos en Telegram
   logger.info('Iniciando long polling con Telegram...');
+  await bot.api.setMyCommands(BOT_MENU_COMMANDS).catch((err) => {
+    logger.warn('No se pudo actualizar el menú de comandos en Telegram:', err);
+  });
+
   await bot.start({
     onStart: (botInfo) => {
       logger.info(`✅ Bot iniciado correctamente como @${botInfo.username}`);

@@ -2,7 +2,7 @@
 > **Reglas de uso:** Memoria episódica entre sesiones. Mantener siempre por debajo de **50-60 líneas**. Resumir o eliminar lo que ya no aporte valor. Si algo se vuelve una regla permanente, moverlo a `AGENTS.md`. **NUNCA** guardar secretos, tokens ni datos sensibles.
 
 ## Estado Actual
-- Bot de Telegram ampliado: texto, notas de voz (STT), comandos `/start`, `/list`, `/total`, `/budget`, `/categories` y `/token`.
+- Bot de Telegram en español: texto, voz (STT), menú nativo (`setMyCommands`) y comandos `/gastos`, `/total`, `/presupuesto`, `/categorias`, `/vincular` y `/ayuda`.
 - STT desacoplado con `ISpeechToTextProvider` (soporta Groq Whisper y OpenAI Whisper).
 - Categorías del sistema + categorías personalizadas por usuario en PostgreSQL con fallback seguro a "otros".
 - Presupuestos mensuales (`Budget`) con cálculo de porcentaje consumido y exceso.

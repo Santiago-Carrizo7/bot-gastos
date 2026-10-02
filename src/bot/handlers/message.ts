@@ -4,18 +4,24 @@ import { ExpenseService } from '../../expenses/expense.service.js';
 import { ExpenseParsingError } from '../../shared/errors.js';
 import { logger } from '../../shared/logger.js';
 import { formatCurrency, formatDate, getCategoryIcon } from '../formatters.js';
+import { buildHelpMessage } from './commands.js';
+
+const HELP_KEYWORDS = new Set(['ayuda', 'comandos', 'menu', 'menú', 'hola', 'opciones', '?']);
 
 export function registerMessageHandler(bot: Bot<BotContext>, expenseService: ExpenseService) {
   bot.on('message:text', async (ctx) => {
     const text = ctx.message.text.trim();
+    const lowerText = text.toLowerCase();
 
-    // Si comienza con "/", es un comando ya manejado o desconocido
-    if (text.startsWith('/')) {
+    // Si es un comando "/" no reconocido o una palabra clave de ayuda, mostramos el menú de comandos
+    if (text.startsWith('/') || HELP_KEYWORDS.has(lowerText)) {
+      const helpMsg = buildHelpMessage(ctx.from?.first_name);
+      await ctx.reply(helpMsg, { parse_mode: 'Markdown' });
       return;
     }
 
     if (!ctx.user) {
-      await ctx.reply('No se pudo identificar tu usuario. Por favor iniciá con /start');
+      await ctx.reply('No se pudo identificar tu usuario. Por favor tocá /ayuda');
       return;
     }
 
@@ -41,7 +47,21 @@ export function registerMessageHandler(bot: Bot<BotContext>, expenseService: Exp
       if (error instanceof ExpenseParsingError) {
         logger.warn('Error de interpretación de mensaje:', { error: error.message, text });
         await ctx.reply(
-          `🤔 No pude interpretar tu gasto.\n\nPor favor reformulalo de forma directa indicando el monto y el concepto, por ejemplo:\n• *"Gasté 5000 en Saeta"*\n• *"Ayer pagué 12000 en el super"*\n• *"Pagué 35000 de luz"*\n• *"Compré zapatillas por 80000 en 3 cuotas"*`,
+          [
+            '🤔 No pude entender ese mensaje como un gasto.',
+            '',
+            'Para anotar un gasto, decime el *monto* y en qué lo gastaste, por ejemplo:',
+            '• *"Gasté 5000 en Saeta"*',
+            '• *"Ayer pagué 12000 en el super"*',
+            '• *"Compré zapatillas por 80000 en 3 cuotas"*',
+            '',
+            '📌 *¿Buscabas los comandos?*',
+            '• /gastos — Últimos 5 gastos',
+            '• /total — Total gastado en el mes',
+            '• /presupuesto — Ver o fijar presupuestos',
+            '• /categorias — Ver categorías',
+            '• /vincular — Código para la app móvil',
+          ].join('\n'),
           { parse_mode: 'Markdown' }
         );
         return;

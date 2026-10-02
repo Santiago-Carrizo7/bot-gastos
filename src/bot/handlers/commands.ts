@@ -12,6 +12,18 @@ export interface RegisterCommandsDeps {
   apiSecret?: string;
 }
 
+/**
+ * Comandos oficiales que se registran en el botón "Menú" nativo de Telegram
+ */
+export const BOT_MENU_COMMANDS = [
+  { command: 'gastos', description: '📋 Ver tus últimos 5 gastos' },
+  { command: 'total', description: '💰 Ver el total gastado en el mes' },
+  { command: 'presupuesto', description: '📊 Ver o fijar presupuestos mensuales' },
+  { command: 'categorias', description: '🏷️ Ver tus categorías disponibles' },
+  { command: 'vincular', description: '📱 Vincular con la app del celular' },
+  { command: 'ayuda', description: '❓ Ver guía rápida y comandos' },
+];
+
 function renderProgressBar(percentage: number): string {
   const totalBlocks = 10;
   const clamped = Math.max(0, Math.min(100, percentage));
@@ -20,36 +32,41 @@ function renderProgressBar(percentage: number): string {
   return '█'.repeat(filled) + '░'.repeat(empty);
 }
 
+export function buildHelpMessage(firstName?: string): string {
+  const name = firstName ? ` ${firstName}` : '';
+  return [
+    `👋 ¡Hola${name}! Soy tu asistente de control de gastos.`,
+    '',
+    '📝 *¿Cómo registrar un gasto?*',
+    'Simplemente escribime o mandame un *audio de voz* 🎙️ como si hablaras con una persona:',
+    '• *"Gasté 5000 en Saeta"*',
+    '• *"Ayer gasté 12000 en el supermercado"*',
+    '• *"Pagué 35000 de luz"*',
+    '• *"Compré zapatillas por 80000 en 3 cuotas"*',
+    '',
+    '📌 *Comandos disponibles (podés tocarlos):*',
+    '• /gastos — Ver tus últimos 5 gastos',
+    '• /total — Ver el total acumulado del mes',
+    '• /presupuesto — Ver o fijar presupuestos del mes',
+    '• /categorias — Ver las categorías de gastos',
+    '• /vincular — Obtener código para la app móvil',
+    '• /ayuda — Mostrar este menú de ayuda',
+  ].join('\n');
+}
+
 export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDeps) {
-  const { expenseService, categoryService, budgetService, apiSecret } = deps;
+  const { expenseService, categoryService, budgetService } = deps;
 
-  // /start
-  bot.command('start', async (ctx) => {
-    const name = ctx.from?.first_name ? ` ${ctx.from.first_name}` : '';
-    const welcome = [
-      `👋 ¡Hola${name}! Soy tu bot de control de gastos personales.`,
-      '',
-      'Podés registrar un gasto escribiendo o enviando un audio/nota de voz 🎙️:',
-      '• *"Gasté 5000 en Saeta"*',
-      '• *"Ayer gasté 12000 en el supermercado"*',
-      '• *"Pagué 35000 de luz"*',
-      '• *"Compré zapatillas por 80000 en 3 cuotas"*',
-      '',
-      'Comandos disponibles:',
-      '• /list — Ver tus últimos 5 gastos',
-      '• /total — Ver total gastado en el mes actual',
-      '• /budget — Ver o fijar tus presupuestos mensuales',
-      '• /categories — Ver tus categorías disponibles',
-      '• /token — Generar token de acceso para la API móvil',
-    ].join('\n');
-
+  // /start, /ayuda, /inicio
+  bot.command(['start', 'ayuda', 'inicio', 'help'], async (ctx) => {
+    const welcome = buildHelpMessage(ctx.from?.first_name);
     await ctx.reply(welcome, { parse_mode: 'Markdown' });
   });
 
-  // /list
-  bot.command('list', async (ctx) => {
+  // /gastos, /listargastos, /list
+  bot.command(['gastos', 'listargastos', 'ultimos', 'list'], async (ctx) => {
     if (!ctx.user) {
-      await ctx.reply('No se pudo identificar tu usuario. Intentá nuevamente con /start.');
+      await ctx.reply('No se pudo identificar tu usuario. Intentá nuevamente con /ayuda.');
       return;
     }
 
@@ -57,7 +74,8 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
 
     if (expenses.length === 0) {
       await ctx.reply(
-        'Aún no tenés gastos registrados. Escribí un mensaje o nota de voz para registrar el primero, por ejemplo: "Gasté 3500 en almuerzo".'
+        'Aún no tenés gastos registrados. Escribí un mensaje o mandá un audio para registrar el primero, por ejemplo: *"Gasté 3500 en almuerzo"*.',
+        { parse_mode: 'Markdown' }
       );
       return;
     }
@@ -75,8 +93,8 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
     await ctx.reply(message, { parse_mode: 'Markdown' });
   });
 
-  // /total
-  bot.command('total', async (ctx) => {
+  // /total, /totalgastado
+  bot.command(['total', 'totalgastado', 'resumen'], async (ctx) => {
     if (!ctx.user) {
       await ctx.reply('No se pudo identificar tu usuario. Intentá nuevamente.');
       return;
@@ -104,8 +122,8 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
     await ctx.reply(message, { parse_mode: 'Markdown' });
   });
 
-  // /budget
-  bot.command('budget', async (ctx) => {
+  // /presupuesto, /fijarpresupuesto, /budget
+  bot.command(['presupuesto', 'fijarpresupuesto', 'presupuestos', 'budget'], async (ctx) => {
     if (!ctx.user || !budgetService) {
       await ctx.reply('Funcionalidad de presupuestos no disponible.');
       return;
@@ -114,7 +132,7 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
     const text = ctx.message?.text?.trim() ?? '';
     const parts = text.split(/\s+/).slice(1);
 
-    // Caso 1: Configurar presupuesto ej: /budget comida 150000
+    // Caso 1: Configurar presupuesto ej: /presupuesto comida 150000
     if (parts.length >= 2) {
       const categoryName = parts[0].toLowerCase();
       const amount = parseFloat(parts[1].replace(/\./g, '').replace(',', '.'));
@@ -146,13 +164,13 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
         [
           '📊 *Presupuestos Mensuales*',
           '',
-          'No tenés presupuestos configurados todavía.',
-          'Podés fijar uno escribiendo:',
-          '`/budget <categoría> <monto>`',
+          'Todavía no configuraste ningún tope mensual.',
+          'Para definir cuánto querés gastar por mes en una categoría, escribí:',
+          '`/presupuesto <categoría> <monto>`',
           '',
-          'Ejemplo:',
-          '`/budget comida 150000`',
-          '`/budget transporte 80000`',
+          '*Ejemplos:*',
+          '• `/presupuesto comida 150000`',
+          '• `/presupuesto transporte 80000`',
         ].join('\n'),
         { parse_mode: 'Markdown' }
       );
@@ -168,17 +186,23 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
 
       const alert = b.isExceeded
         ? `\n   ❗ *Excedido por ${formatCurrency(Math.abs(b.remainingAmount), b.currency)}*`
-        : ` (restan ${formatCurrency(b.remainingAmount, b.currency)})`;
+        : ` (disponible: ${formatCurrency(b.remainingAmount, b.currency)})`;
 
       return `${icon} *${b.category}*: ${statusIcon} ${spent} / ${limit} (${b.percentageUsed}%)\n   \`${bar}\`${alert}`;
     });
 
-    const msg = ['📊 *Progreso de Presupuestos del Mes:*', '', ...lines].join('\n\n');
+    const msg = [
+      '📊 *Progreso de tus Presupuestos del Mes:*',
+      '',
+      ...lines,
+      '',
+      '💡 _Para modificar o agregar otro usá: `/presupuesto <categoría> <monto>`_ ',
+    ].join('\n');
     await ctx.reply(msg, { parse_mode: 'Markdown' });
   });
 
-  // /categories
-  bot.command('categories', async (ctx) => {
+  // /categorias, /categories
+  bot.command(['categorias', 'categories'], async (ctx) => {
     if (!ctx.user || !categoryService) {
       await ctx.reply('No se pudieron obtener las categorías.');
       return;
@@ -192,12 +216,12 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
     const customLines =
       custom.length > 0
         ? custom.map((c) => `• ${c.icon ?? '🏷️'} *${c.name}* (personalizada)`).join('\n')
-        : '_Ninguna todavía_';
+        : '_Ninguna creada todavía_';
 
     const msg = [
-      '🏷️ *Tus Categorías Disponibles:*',
+      '🏷️ *Categorías Disponibles:*',
       '',
-      '*Categorías del Sistema:*',
+      '*Categorías Generales:*',
       systemLines,
       '',
       '*Tus Categorías Personalizadas:*',
@@ -207,15 +231,13 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
     await ctx.reply(msg, { parse_mode: 'Markdown' });
   });
 
-  // /token (para la API REST / App Flutter)
-  bot.command('token', async (ctx) => {
+  // /vincular, /token
+  bot.command(['vincular', 'token'], async (ctx) => {
     if (!ctx.user) {
       await ctx.reply('No se pudo identificar tu usuario.');
       return;
     }
 
-    // Creación de payload con firma segura
-    // Para simplificar sin requerir dependencias complejas adicionales, usamos un token codificado o JWT
     const tokenPayload = Buffer.from(
       JSON.stringify({
         userId: ctx.user.id,
@@ -226,13 +248,15 @@ export function registerCommands(bot: Bot<BotContext>, deps: RegisterCommandsDep
 
     await ctx.reply(
       [
-        '🔑 *Token de Acceso para la API REST / App Móvil:*',
+        '📱 *Vincular con la Aplicación Móvil*',
+        '',
+        'Cuando abras la aplicación de gastos en tu celular por primera vez, te va a pedir un *código de vinculación* para conectar tu cuenta.',
+        '',
+        '👇 *Tocá el siguiente código para copiarlo y pegalo en la app:*',
         '',
         `\`${tokenPayload}\``,
         '',
-        'Podés usar este token en el header HTTP:',
-        '`Authorization: Bearer <token>`',
-        'o enviar el header `x-user-id: ' + ctx.user.id + '` en desarrollo local.',
+        '🔒 _Este código es personal. No lo compartas con otras personas._',
       ].join('\n'),
       { parse_mode: 'Markdown' }
     );
