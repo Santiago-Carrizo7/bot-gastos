@@ -1,15 +1,20 @@
 import { IAIProvider } from './providers/base.js';
 import { buildExpenseParserSystemPrompt } from './prompts/expense-parser.prompt.js';
 import { ParsedExpense, ParsedExpenseSchema } from '../expenses/expense.schema.js';
+import { DEFAULT_CATEGORY_NAMES } from '../expenses/expense.types.js';
 import { ExpenseParsingError } from '../shared/errors.js';
 import { logger } from '../shared/logger.js';
 
 export class ExpenseParser {
   constructor(private readonly aiProvider: IAIProvider) {}
 
-  async parse(text: string, referenceDate: Date = new Date()): Promise<ParsedExpense> {
+  async parse(
+    text: string,
+    availableCategories: string[] = DEFAULT_CATEGORY_NAMES,
+    referenceDate: Date = new Date()
+  ): Promise<ParsedExpense> {
     const dateStr = referenceDate.toISOString().slice(0, 10);
-    const systemPrompt = buildExpenseParserSystemPrompt(dateStr);
+    const systemPrompt = buildExpenseParserSystemPrompt(dateStr, availableCategories);
 
     let rawResponse: string;
     try {
@@ -45,18 +50,32 @@ export class ExpenseParser {
       );
     }
 
-    return validation.data;
+    // Regla de oro: la categoría DEBE pertenecer a availableCategories.
+    // Si la IA devolvió algo fuera de la lista, hacemos fallback seguro a "otros".
+    const parsedData = validation.data;
+    const normalizedCategory = parsedData.category.toLowerCase().trim();
+    const isCategoryAllowed = availableCategories.includes(normalizedCategory);
+
+    if (!isCategoryAllowed) {
+      logger.warn(
+        `Categoría "${normalizedCategory}" devuelta por IA no pertenece a las permitidas. Aplicando fallback a "otros".`,
+        { availableCategories }
+      );
+      parsedData.category = availableCategories.includes('otros') ? 'otros' : availableCategories[0] ?? 'otros';
+    } else {
+      parsedData.category = normalizedCategory;
+    }
+
+    return parsedData;
   }
 
   private extractJson(rawText: string): string {
     let text = rawText.trim();
 
-    // Elimina bloques de código markdown tipo ```json ... ``` o ``` ... ```
     if (text.startsWith('```')) {
       text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
     }
 
-    // Si aún tiene texto alrededor, busca el primer '{' y el último '}'
     const firstBrace = text.indexOf('{');
     const lastBrace = text.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {

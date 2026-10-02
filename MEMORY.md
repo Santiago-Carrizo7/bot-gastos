@@ -2,26 +2,25 @@
 > **Reglas de uso:** Memoria episódica entre sesiones. Mantener siempre por debajo de **50-60 líneas**. Resumir o eliminar lo que ya no aporte valor. Si algo se vuelve una regla permanente, moverlo a `AGENTS.md`. **NUNCA** guardar secretos, tokens ni datos sensibles.
 
 ## Estado Actual
-- MVP completamente implementado, compilable (`pnpm build`) y verificado (`pnpm test`).
-- Bot de Telegram (Grammy) con comandos `/start`, `/list` y `/total`, y handler de texto natural.
-- Capa de IA con `IAIProvider` y `OpenRouterProvider` funcional con extracción JSON y validación Zod.
-- PostgreSQL en Docker (`docker-compose.yml`) + Prisma con modelos `User`, `Expense` y migración inicial aplicada en SQL.
-- Auto-registro de usuarios mediante middleware de Telegram por `telegramId`.
+- Bot de Telegram ampliado: texto, notas de voz (STT), comandos `/start`, `/list`, `/total`, `/budget`, `/categories` y `/token`.
+- STT desacoplado con `ISpeechToTextProvider` (soporta Groq Whisper y OpenAI Whisper).
+- Categorías del sistema + categorías personalizadas por usuario en PostgreSQL con fallback seguro a "otros".
+- Presupuestos mensuales (`Budget`) con cálculo de porcentaje consumido y exceso.
+- Servidor REST Express desacoplado (`/api/expenses`, `/api/categories`, `/api/budgets`, `/health`) con autenticación Bearer token.
+- Dockerfile multi-stage de producción y `docker-compose.yml` local con volúmenes persistentes y healthchecks.
 
 ## Decisiones Técnicas Recientes
-- **Categorías Cerradas:** Definidas en `EXPENSE_CATEGORIES`, sincronizadas entre Zod, Postgres Enum y prompt dinámico.
-- **Abstracción IA:** `ExpenseParser` usa `IAIProvider`, permitiendo cambiar de OpenRouter a OpenAI/Gemini sin tocar lógica.
-- **Normalización de Fechas:** Las fechas relativas extraídas se normalizan a mediodía UTC (`T12:00:00Z`) para evitar desfasajes horarios al persistir.
-- **Telegram IDs:** Almacenados como `String` en Postgres para evitar overflow de enteros de 64 bits en JavaScript.
+- **Categorías Dinámicas:** Migración de Enum a tabla `categories` con campo `category` en `Expense` preservando datos históricos.
+- **Speech-to-Text:** Implementación `OpenAICompatibleSTTProvider` que usa la API estándar multipart de Whisper (Groq/OpenAI).
+- **Mismo Flujo de Dominio:** Notas de voz se transcriben a texto y reutilizan idénticamente `ExpenseService.createFromText`.
+- **API REST Desacoplada:** Controllers reutilizan los mismos servicios del bot sin duplicar lógica de negocio.
 
 ## Aprendizajes y Errores a Evitar (Gotchas)
-- **Windows pnpm:** En PowerShell ejecutar `pnpm.cmd` si la política de scripts bloquea `pnpm.ps1`.
-- **ESM NodeNext:** Imports relativos en TypeScript requieren extensión `.js` explícita (ej. `./expense.types.js`).
-- **Prisma Migrations en Desarrollo:** `prisma migrate diff` genera SQL exacto sin necesidad de shadow database viva.
-- **Sin Secretos:** No commitear `.env`; usar siempre `.env.example`.
+- **Groq Whisper:** Velocidad < 1s y free tier amplio en `https://api.groq.com/openai/v1`.
+- **Telegram Voice:** Las notas de voz vienen en formato `.ogg` (Opus) y se descargan directo desde la Bot API de Telegram vía `ctx.getFile()`.
+- **Render Sleep:** Render free tier duerme el contenedor tras 15 min de inactividad; se requiere ping a `/health` o Railway (\$5 crédito/mes).
 
 ## Próximos Pasos
-- [ ] Procesamiento de audios y notas de voz con Speech-to-Text (Whisper / OpenAI / Groq).
-- [ ] Categorías personalizadas por usuario.
-- [ ] Presupuestos mensuales y alertas de consumo.
-- [ ] Endpoints HTTP / REST para futura integración con app móvil Flutter.
+- [ ] Implementar aplicación móvil Flutter consumiendo la API REST.
+- [ ] Alertas o notificaciones proactivas de presupuestos al aproximarse al límite.
+- [ ] Exportación de reportes mensuales en CSV o PDF.

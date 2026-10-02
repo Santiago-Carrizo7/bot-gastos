@@ -1,6 +1,6 @@
-import { ExpenseCategory } from '../expenses/expense.types.js';
+import { SYSTEM_CATEGORIES } from '../expenses/expense.types.js';
 
-export const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
+export const CATEGORY_ICONS: Record<string, string> = {
   transporte: '🚌',
   comida: '🍔',
   vivienda: '🏠',
@@ -13,6 +13,12 @@ export const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
   impuestos: '🏛️',
   otros: '📦',
 };
+
+export function getCategoryIcon(categoryName: string, customIcon?: string | null): string {
+  if (customIcon) return customIcon;
+  const normalized = categoryName.toLowerCase().trim();
+  return CATEGORY_ICONS[normalized] ?? '🏷️';
+}
 
 export function formatCurrency(amount: number | string, currency: string = 'ARS'): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;

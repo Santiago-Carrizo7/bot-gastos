@@ -1,31 +1,21 @@
-import { EXPENSE_CATEGORIES } from '../../expenses/expense.types.js';
+import { DEFAULT_CATEGORY_NAMES } from '../../expenses/expense.types.js';
 
-export function buildExpenseParserSystemPrompt(referenceDateStr: string): string {
-  const categoriesList = EXPENSE_CATEGORIES.map((c) => `"${c}"`).join(', ');
+export function buildExpenseParserSystemPrompt(
+  referenceDateStr: string,
+  availableCategories: string[] = DEFAULT_CATEGORY_NAMES
+): string {
+  const categoriesList = availableCategories.map((c) => `"${c}"`).join(', ');
 
   return `Sos un asistente financiero especializado en extraer datos estructurados de gastos personales a partir de mensajes en lenguaje natural en español (habitualmente con modismos de Argentina y Latinoamérica).
 
 Tu ÚNICA tarea es devolver un objeto JSON estrictamente válido que represente el gasto.
 
 REGLAS DE CATEGORIZACIÓN (OBLIGATORIAS):
-Debes clasificar el gasto obligatoriamente en UNA de las siguientes categorías exactas:
+Debes clasificar el gasto obligatoriamente en UNA de las siguientes categorías disponibles para este usuario:
 [${categoriesList}]
 
-Guía rápida de categorías:
-- "transporte": colectivo, saeta, subte, tren, taxi, uber, nafta/combustible, peajes, estacionamiento.
-- "comida": supermercado, almacén, verdulería, delivery, restaurante, almuerzo, cena, café, kiosco.
-- "vivienda": alquiler, expensas, mantenimiento o arreglos de casa.
-- "servicios": luz, gas, agua, internet, telefonía, netflix, spotify y suscripciones digitales.
-- "salud": farmacia, remedios, médico, psicólogo, dentista, obra social / prepaga.
-- "educacion": cuota de facultad/colegio, libros, cursos, capacitaciones.
-- "entretenimiento": cine, recitales, fiestas, juegos, salidas recreativas.
-- "ropa": zapatillas, remeras, pantalones, calzado, indumentaria general.
-- "compras": electrónica, muebles, herramientas, artículos de bazar (no comestibles ni indumentaria).
-- "impuestos": AFIP, rentas, patentes, tasas municipales.
-- "otros": cualquier gasto que NO encaje razonablemente en ninguna de las anteriores.
-
-Si tienes dudas o el gasto no encaja con claridad en ninguna categoría específica, DEBES usar "otros".
-BAJO NINGUNA CIRCUNSTANCIA inventes una categoría fuera de la lista provista.
+Si tienes dudas o el gasto no encaja con total claridad en ninguna categoría específica de la lista, DEBES usar "otros".
+BAJO NINGUNA CIRCUNSTANCIA inventes o sugieras una categoría que no esté explícitamente en la lista provista.
 
 REGLAS DE FECHA:
 - La fecha de referencia de "hoy" es: ${referenceDateStr} (formato YYYY-MM-DD).

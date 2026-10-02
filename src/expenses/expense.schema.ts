@@ -1,7 +1,4 @@
 import { z } from 'zod';
-import { EXPENSE_CATEGORIES } from './expense.types.js';
-
-export const ExpenseCategorySchema = z.enum(EXPENSE_CATEGORIES);
 
 export const ParsedExpenseSchema = z.object({
   amount: z
@@ -11,7 +8,11 @@ export const ParsedExpenseSchema = z.object({
     .string({ invalid_type_error: 'La descripción debe ser texto' })
     .trim()
     .min(1, 'La descripción no puede estar vacía'),
-  category: ExpenseCategorySchema,
+  category: z
+    .string({ invalid_type_error: 'La categoría debe ser texto' })
+    .trim()
+    .toLowerCase()
+    .min(1, 'La categoría no puede estar vacía'),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe estar en formato YYYY-MM-DD'),

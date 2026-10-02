@@ -3,8 +3,7 @@ import { BotContext } from '../bot.context.js';
 import { ExpenseService } from '../../expenses/expense.service.js';
 import { ExpenseParsingError } from '../../shared/errors.js';
 import { logger } from '../../shared/logger.js';
-import { formatCurrency, formatDate, CATEGORY_ICONS } from '../formatters.js';
-import { ExpenseCategory } from '../../expenses/expense.types.js';
+import { formatCurrency, formatDate, getCategoryIcon } from '../formatters.js';
 
 export function registerMessageHandler(bot: Bot<BotContext>, expenseService: ExpenseService) {
   bot.on('message:text', async (ctx) => {
@@ -26,7 +25,7 @@ export function registerMessageHandler(bot: Bot<BotContext>, expenseService: Exp
 
       const expense = await expenseService.createFromText(ctx.user.id, text);
 
-      const icon = CATEGORY_ICONS[expense.category as ExpenseCategory] ?? '📦';
+      const icon = getCategoryIcon(expense.category);
       const formattedAmount = formatCurrency(Number(expense.amount), expense.currency);
       const formattedDate = formatDate(expense.date);
       const installmentsStr = expense.installments > 1 ? `\n💳 Cuotas: *${expense.installments}*` : '';
