@@ -4,7 +4,8 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apk add --no-cache openssl
+RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
 
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
@@ -18,7 +19,7 @@ RUN pnpm exec prisma generate
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
 
 COPY package.json pnpm-lock.yaml tsconfig.json ./
 COPY --from=deps /app/node_modules ./node_modules
@@ -36,7 +37,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apk add --no-cache openssl
+RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
 
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
