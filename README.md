@@ -126,19 +126,19 @@ La consola confirmará el inicio de ambos servicios:
 - **Nota de voz 🎙️:** Enviá un audio diciendo tu gasto; el bot lo transcribirá e interpretará al instante.
 
 ### Comandos Disponibles
-- `/start` — Mensaje de bienvenida y ayuda.
-- `/list` — Ver los últimos 5 gastos registrados.
-- `/total` — Ver total acumulado en el mes en curso.
-- `/budget` — Consultar el progreso de presupuestos mensuales del mes.
-- `/budget <categoría> <monto>` — Fijar o actualizar un presupuesto (ej: `/budget comida 150000`).
-- `/categories` — Ver categorías activas del sistema y tus categorías personalizadas.
-- `/token` — Generar token de acceso para la API REST / App móvil.
+- `/ayuda` (o `/start`) — Mensaje de bienvenida y menú de comandos.
+- `/gastos` — Ver los últimos 5 gastos registrados.
+- `/total` — Ver el total acumulado en el mes en curso.
+- `/presupuesto` — Consultar el progreso de presupuestos mensuales del mes.
+- `/presupuesto <categoría> <monto>` — Fijar o actualizar un presupuesto (ej: `/presupuesto comida 150000`).
+- `/categorias` — Ver categorías activas del sistema y tus categorías personalizadas.
+- `/vincular` — Generar código de vinculación para la API REST / App móvil.
 
 ---
 
 ## 🌐 Endpoints de la API REST
 
-Todos los endpoints (excepto `/health`) requieren autenticación mediante el header `Authorization: Bearer <token>` (obtenido con `/token` en Telegram) o `x-user-id: <id>` en desarrollo local.
+Todos los endpoints (excepto `/health`) requieren autenticación mediante el header `Authorization: Bearer <token>` (obtenido con `/vincular` en Telegram) o `x-user-id: <id>` en desarrollo local.
 
 ### Gastos
 - `GET /api/expenses` — Listar gastos (parámetros opcionales: `limit`, `offset`, `category`).
