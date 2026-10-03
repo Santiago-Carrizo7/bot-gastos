@@ -167,7 +167,41 @@ class ExpenseRepository {
       final data = response.data['data'] as Map<String, dynamic>;
       return AnalyticsModel.fromJson(data);
     } catch (e) {
-      throw ApiErrorHandler.handle(e);
+      // Fallback si el servidor en producción aún no tiene desplegado /api/analytics
+      try {
+        final summary = await getMonthlySummary(year: year, month: month);
+        final allExpenses = await getExpenses(limit: 200);
+        final now = DateTime.now();
+        final history = <MonthHistoryItem>[];
+
+        for (int i = monthsCount - 1; i >= 0; i--) {
+          final d = DateTime(now.year, now.month - i, 1);
+          double total = 0;
+          int count = 0;
+          for (final exp in allExpenses) {
+            if (exp.date.year == d.year && exp.date.month == d.month) {
+              total += exp.amount;
+              count++;
+            }
+          }
+          history.add(
+            MonthHistoryItem(
+              year: d.year,
+              month: d.month,
+              monthName: DateFormatter.monthNames[d.month - 1],
+              total: total,
+              count: count,
+            ),
+          );
+        }
+
+        return AnalyticsModel(
+          current: summary,
+          monthlyHistory: history,
+        );
+      } catch (_) {
+        throw ApiErrorHandler.handle(e);
+      }
     }
   }
 }

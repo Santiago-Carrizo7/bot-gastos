@@ -52,8 +52,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// No cambia el estado global a loading para no desmontar LinkScreen ni borrar el input
   Future<bool> linkAccount(String token) async {
-    state = AuthState.loading();
     try {
       final user = await _repository.verifyAndSaveToken(token);
       state = AuthState.authenticated(user);
