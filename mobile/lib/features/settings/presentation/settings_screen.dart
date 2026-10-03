@@ -1,64 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/api/api_endpoints.dart';
-import '../../../core/providers/core_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../categories/presentation/category_list_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
-
-  void _showServerConfigDialog(BuildContext context, WidgetRef ref) {
-    final storage = ref.read(secureStorageProvider);
-    final controller = TextEditingController();
-
-    storage.getApiBaseUrl().then((current) {
-      controller.text = current ?? ApiEndpoints.defaultBaseUrl;
-
-      if (!context.mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Configurar Servidor'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Dirección del backend REST de la aplicación:',
-                style: TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  labelText: 'URL Base',
-                  hintText: 'http://10.0.2.2:3000',
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final url = controller.text.trim();
-                if (url.isNotEmpty) {
-                  await storage.saveApiBaseUrl(url);
-                }
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
-      );
-    });
-  }
 
   void _confirmUnlink(BuildContext context, WidgetRef ref) {
     showDialog(
@@ -179,31 +126,19 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 8),
 
           Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.category_outlined),
-                  title: const Text('Gestionar Categorías'),
-                  subtitle: const Text('Categorías del sistema y personalizadas'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CategoryListScreen(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.dns_outlined),
-                  title: const Text('Servidor / Backend'),
-                  subtitle: const Text('Configurar URL base de conexión'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => _showServerConfigDialog(context, ref),
-                ),
-              ],
+            child: ListTile(
+              leading: const Icon(Icons.category_outlined),
+              title: const Text('Gestionar Categorías'),
+              subtitle: const Text('Categorías del sistema y personalizadas'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CategoryListScreen(),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(height: 24),

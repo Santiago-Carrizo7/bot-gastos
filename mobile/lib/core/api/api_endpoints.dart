@@ -1,21 +1,5 @@
-import 'package:flutter/foundation.dart';
-
 class ApiEndpoints {
-  static String get defaultBaseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:3000';
-    }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return 'http://10.0.2.2:3000';
-      case TargetPlatform.iOS:
-      case TargetPlatform.windows:
-      case TargetPlatform.macOS:
-      case TargetPlatform.linux:
-      default:
-        return 'http://localhost:3000';
-    }
-  }
+  static const String defaultBaseUrl = 'https://bot-gastos-nezr.onrender.com';
 
   // Endpoints
   static const String health = '/health';

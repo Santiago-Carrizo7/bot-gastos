@@ -22,17 +22,7 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Inyectar URL base dinámica
-          final customUrl = await storageService.getApiBaseUrl();
-          if (customUrl != null && customUrl.trim().isNotEmpty) {
-            var clean = customUrl.trim();
-            if (clean.endsWith('/')) {
-              clean = clean.substring(0, clean.length - 1);
-            }
-            options.baseUrl = clean;
-          } else {
-            options.baseUrl = ApiEndpoints.defaultBaseUrl;
-          }
+          options.baseUrl = ApiEndpoints.defaultBaseUrl;
 
           // Inyectar Bearer token si no fue especificado explícitamente en la llamada
           if (!options.headers.containsKey('Authorization')) {

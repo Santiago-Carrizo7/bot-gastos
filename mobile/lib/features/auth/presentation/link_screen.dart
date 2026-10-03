@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/api/api_endpoints.dart';
-import '../../../core/providers/core_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
 
@@ -15,31 +13,13 @@ class LinkScreen extends ConsumerStatefulWidget {
 
 class _LinkScreenState extends ConsumerState<LinkScreen> {
   final TextEditingController _tokenController = TextEditingController();
-  final TextEditingController _urlController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   String? _errorMessage;
 
   @override
-  void initState() {
-    super.initState();
-    _loadCurrentUrl();
-  }
-
-  Future<void> _loadCurrentUrl() async {
-    final storage = ref.read(secureStorageProvider);
-    final savedUrl = await storage.getApiBaseUrl();
-    if (mounted) {
-      setState(() {
-        _urlController.text = savedUrl ?? ApiEndpoints.defaultBaseUrl;
-      });
-    }
-  }
-
-  @override
   void dispose() {
     _tokenController.dispose();
-    _urlController.dispose();
     super.dispose();
   }
 
@@ -61,13 +41,6 @@ class _LinkScreenState extends ConsumerState<LinkScreen> {
       _errorMessage = null;
     });
 
-    // Guardar primero la URL del servidor ingresada
-    var cleanUrl = _urlController.text.trim();
-    if (cleanUrl.endsWith('/')) {
-      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
-    }
-    await ref.read(secureStorageProvider).saveApiBaseUrl(cleanUrl);
-
     final success = await ref
         .read(authNotifierProvider.notifier)
         .linkAccount(_tokenController.text.trim());
@@ -82,7 +55,7 @@ class _LinkScreenState extends ConsumerState<LinkScreen> {
       final authState = ref.read(authNotifierProvider);
       setState(() {
         _errorMessage = authState.errorMessage ??
-            'No se pudo conectar con el servidor ($cleanUrl). Verificá la URL del backend y el código de vinculación.';
+            'No se pudo vincular la cuenta. Verificá que el código sea correcto y tu conexión a internet.';
       });
     }
   }
@@ -108,8 +81,8 @@ class _LinkScreenState extends ConsumerState<LinkScreen> {
                   // Icono Hero
                   Center(
                     child: Container(
-                      width: 76,
-                      height: 76,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
                         color: isDark
                             ? AppColors.surfaceDark
@@ -125,12 +98,12 @@ class _LinkScreenState extends ConsumerState<LinkScreen> {
                       ),
                       child: const Icon(
                         Icons.account_balance_wallet_rounded,
-                        size: 38,
+                        size: 40,
                         color: AppColors.primary,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   // Título & Subtítulo
                   Text(
@@ -153,12 +126,12 @@ class _LinkScreenState extends ConsumerState<LinkScreen> {
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   // Card de Instrucciones
                   Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(18.0),
+                      padding: const EdgeInsets.all(20.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -181,38 +154,16 @@ class _LinkScreenState extends ConsumerState<LinkScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          _buildStepItem('1', 'Ingresá la URL donde está subido tu servidor'),
-                          _buildStepItem('2', 'Enviá /vincular a tu bot en Telegram'),
-                          _buildStepItem('3', 'Copiá el código y pegalo aquí abajo', isLast: true),
+                          const SizedBox(height: 14),
+                          _buildStepItem('1', 'Abrí tu bot de gastos en Telegram'),
+                          _buildStepItem('2', 'Enviá el comando /vincular'),
+                          _buildStepItem('3', 'Tocá el código para copiarlo'),
+                          _buildStepItem('4', 'Pegalo en el campo aquí abajo', isLast: true),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Campo de URL del Servidor Remoto
-                  TextFormField(
-                    controller: _urlController,
-                    keyboardType: TextInputType.url,
-                    decoration: const InputDecoration(
-                      labelText: 'URL del Servidor (Backend)',
-                      hintText: 'https://tu-backend.onrender.com',
-                      helperText: 'Ej: https://tu-app.onrender.com o https://tu-app.up.railway.app',
-                      prefixIcon: Icon(Icons.cloud_outlined),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Ingresá la URL de tu servidor backend';
-                      }
-                      if (!value.trim().startsWith('http://') &&
-                          !value.trim().startsWith('https://')) {
-                        return 'La URL debe comenzar con https:// o http://';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
                   // Campo de Token
                   TextFormField(
@@ -221,7 +172,7 @@ class _LinkScreenState extends ConsumerState<LinkScreen> {
                     minLines: 1,
                     decoration: InputDecoration(
                       labelText: 'Código de Vinculación',
-                      hintText: 'Pegá el código obtenido con /vincular...',
+                      hintText: 'Pegá el código obtenido de Telegram...',
                       prefixIcon: const Icon(Icons.key_rounded),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.content_paste_rounded),
@@ -280,13 +231,23 @@ class _LinkScreenState extends ConsumerState<LinkScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Conectando...',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ],
                           )
                         : const Text(
                             'Vincular Telegram',
