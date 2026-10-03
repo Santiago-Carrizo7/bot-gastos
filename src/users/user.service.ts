@@ -7,4 +7,8 @@ export class UserService {
   async getOrCreateByTelegramId(telegramId: string): Promise<User> {
     return this.userRepo.findOrCreate(telegramId);
   }
+
+  async getById(id: string): Promise<User | null> {
+    return this.userRepo.findById(id);
+  }
 }

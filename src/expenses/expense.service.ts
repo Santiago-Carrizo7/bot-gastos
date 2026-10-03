@@ -125,6 +125,61 @@ export class ExpenseService {
     return expense;
   }
 
+  async updateExpense(userId: string, id: string, data: Partial<CreateManualExpenseDTO>): Promise<Expense> {
+    const existing = await this.expenseRepo.findById(id, userId);
+    if (!existing) {
+      throw new AppError('Gasto no encontrado o no pertenece al usuario');
+    }
+
+    if (data.amount !== undefined && data.amount <= 0) {
+      throw new AppError('El monto debe ser mayor a 0');
+    }
+    if (data.description !== undefined && !data.description.trim()) {
+      throw new AppError('La descripción no puede estar vacía');
+    }
+
+    let normalizedCategory: string | undefined;
+    let categoryId: string | undefined;
+
+    if (data.category !== undefined) {
+      normalizedCategory = data.category.toLowerCase().trim();
+      if (this.categoryService) {
+        const allowed = await this.categoryService.getUserCategoryNames(userId);
+        if (!allowed.includes(normalizedCategory)) {
+          throw new AppError(`La categoría "${normalizedCategory}" no es válida.`);
+        }
+        const cat = await this.categoryService.findByNameForUser(normalizedCategory, userId);
+        if (cat) categoryId = cat.id;
+      }
+    }
+
+    let parsedDate: Date | undefined;
+    if (data.date !== undefined) {
+      if (typeof data.date === 'string') {
+        const [y, m, d] = data.date.slice(0, 10).split('-').map(Number);
+        parsedDate = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+      } else {
+        parsedDate = data.date;
+      }
+    }
+
+    const updated = await this.expenseRepo.update(id, userId, {
+      amount: data.amount,
+      description: data.description?.trim(),
+      category: normalizedCategory,
+      categoryId,
+      date: parsedDate,
+      installments: data.installments,
+      currency: data.currency,
+    });
+
+    if (!updated) {
+      throw new AppError('No se pudo actualizar el gasto');
+    }
+
+    return updated;
+  }
+
   async deleteExpense(userId: string, id: string): Promise<void> {
     const deleted = await this.expenseRepo.delete(id, userId);
     if (!deleted) {
@@ -192,4 +247,29 @@ export class ExpenseService {
       categories: categoryBreakdown,
     };
   }
+
+  async getMonthlyHistory(userId: string, monthsCount: number = 6) {
+    const now = new Date();
+    const history = [];
+
+    for (let i = monthsCount - 1; i >= 0; i--) {
+      const d = new Date(Date.UTC(now.getFullYear(), now.getMonth() - i, 1));
+      const year = d.getUTCFullYear();
+      const monthIndex = d.getUTCMonth();
+      const startDate = new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0));
+      const endDate = new Date(Date.UTC(year, monthIndex + 1, 0, 23, 59, 59, 999));
+
+      const aggregate = await this.expenseRepo.getTotalByUserIdAndDateRange(userId, startDate, endDate);
+      history.push({
+        year,
+        month: monthIndex + 1,
+        monthName: MONTH_NAMES[monthIndex],
+        total: aggregate.total,
+        count: aggregate.count,
+      });
+    }
+
+    return history;
+  }
 }
+

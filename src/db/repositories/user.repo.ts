@@ -14,6 +14,12 @@ export class UserRepository {
     });
   }
 
+  async findById(id: string): Promise<User | null> {
+    return prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
   async findOrCreate(telegramId: string): Promise<User> {
     const existing = await this.findByTelegramId(telegramId);
     if (existing) {
@@ -22,3 +28,4 @@ export class UserRepository {
     return this.create(telegramId);
   }
 }
+

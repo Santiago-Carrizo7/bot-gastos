@@ -13,6 +13,7 @@ export interface ExpenseFindOptions {
   startDate?: Date;
   endDate?: Date;
   category?: string;
+  search?: string;
 }
 
 export class ExpenseRepository {
@@ -46,12 +47,20 @@ export class ExpenseRepository {
   }
 
   async findManyByUser(userId: string, options: ExpenseFindOptions = {}): Promise<Expense[]> {
-    const { skip, take = 50, startDate, endDate, category } = options;
+    const { skip, take = 50, startDate, endDate, category, search } = options;
 
     return prisma.expense.findMany({
       where: {
         userId,
         ...(category ? { category: category.toLowerCase().trim() } : {}),
+        ...(search
+          ? {
+              description: {
+                contains: search.trim(),
+                mode: 'insensitive',
+              },
+            }
+          : {}),
         ...(startDate || endDate
           ? {
               date: {
@@ -64,6 +73,24 @@ export class ExpenseRepository {
       orderBy: { date: 'desc' },
       skip,
       take,
+    });
+  }
+
+  async update(id: string, userId: string, data: Partial<CreateExpenseData>): Promise<Expense | null> {
+    const existing = await this.findById(id, userId);
+    if (!existing) return null;
+
+    return prisma.expense.update({
+      where: { id },
+      data: {
+        ...(data.amount !== undefined ? { amount: data.amount } : {}),
+        ...(data.description !== undefined ? { description: data.description.trim() } : {}),
+        ...(data.category !== undefined ? { category: data.category.toLowerCase().trim() } : {}),
+        ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
+        ...(data.date !== undefined ? { date: data.date } : {}),
+        ...(data.installments !== undefined ? { installments: data.installments } : {}),
+        ...(data.currency !== undefined ? { currency: data.currency } : {}),
+      },
     });
   }
 

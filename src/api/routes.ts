@@ -37,12 +37,31 @@ export function createApiRouter(deps: CreateApiRouterDeps): Router {
   const apiProtected = Router();
   apiProtected.use(auth);
 
+  // Usuario / Perfil / Verificación de vinculación
+  apiProtected.get('/me', async (req, res) => {
+    const userId = (req as any).userId as string;
+    const user = await deps.userService.getById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'USER_NOT_FOUND', message: 'Usuario no encontrado' });
+      return;
+    }
+    res.json({
+      data: {
+        id: user.id,
+        telegramId: user.telegramId,
+        createdAt: user.createdAt,
+      },
+    });
+  });
+
   // Gastos
   apiProtected.get('/expenses', expenseCtrl.listExpenses);
   apiProtected.get('/expenses/:id', expenseCtrl.getExpense);
   apiProtected.post('/expenses', expenseCtrl.createExpense);
+  apiProtected.put('/expenses/:id', expenseCtrl.updateExpense);
   apiProtected.delete('/expenses/:id', expenseCtrl.deleteExpense);
   apiProtected.get('/summary', expenseCtrl.getMonthlySummary);
+  apiProtected.get('/analytics', expenseCtrl.getAnalytics);
 
   // Categorías
   apiProtected.get('/categories', categoryCtrl.listCategories);
