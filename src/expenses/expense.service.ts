@@ -3,7 +3,7 @@ import { ExpenseRepository, ExpenseFindOptions } from '../db/repositories/expens
 import { ExpenseParser } from '../ai/expense-parser.js';
 import { CategoryService } from '../categories/category.service.js';
 import { MonthlyTotal } from './expense.types.js';
-import { AppError } from '../shared/errors.js';
+import { AppError, NotFoundError } from '../shared/errors.js';
 
 const MONTH_NAMES = [
   'Enero',
@@ -120,7 +120,7 @@ export class ExpenseService {
   async getExpense(userId: string, id: string): Promise<Expense> {
     const expense = await this.expenseRepo.findById(id, userId);
     if (!expense) {
-      throw new AppError('Gasto no encontrado');
+      throw new NotFoundError('Gasto no encontrado');
     }
     return expense;
   }
@@ -128,7 +128,7 @@ export class ExpenseService {
   async updateExpense(userId: string, id: string, data: Partial<CreateManualExpenseDTO>): Promise<Expense> {
     const existing = await this.expenseRepo.findById(id, userId);
     if (!existing) {
-      throw new AppError('Gasto no encontrado o no pertenece al usuario');
+      throw new NotFoundError('Gasto no encontrado o no pertenece al usuario');
     }
 
     if (data.amount !== undefined && data.amount <= 0) {
@@ -183,7 +183,7 @@ export class ExpenseService {
   async deleteExpense(userId: string, id: string): Promise<void> {
     const deleted = await this.expenseRepo.delete(id, userId);
     if (!deleted) {
-      throw new AppError('Gasto no encontrado o no pertenece al usuario');
+      throw new NotFoundError('Gasto no encontrado o no pertenece al usuario');
     }
   }
 

@@ -101,15 +101,19 @@ class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
               color: AppColors.primaryDark,
+              overflow: TextOverflow.ellipsis,
             );
           }
           return const TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
+            letterSpacing: -0.2,
             color: AppColors.textSecondaryLight,
+            overflow: TextOverflow.ellipsis,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
@@ -211,15 +215,19 @@ class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
+              letterSpacing: -0.2,
               color: AppColors.primaryLight,
+              overflow: TextOverflow.ellipsis,
             );
           }
           return const TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
+            letterSpacing: -0.2,
             color: AppColors.textSecondaryDark,
+            overflow: TextOverflow.ellipsis,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {

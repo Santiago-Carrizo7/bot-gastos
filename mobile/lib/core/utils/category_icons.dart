@@ -35,22 +35,53 @@ class CategoryIcons {
     return defaultEmojis[normalized] ?? '🏷️';
   }
 
-  static Color getColorForCategory(String categoryName) {
-    final hash = categoryName.toLowerCase().hashCode;
-    final index = hash.abs() % _colors.length;
-    return _colors[index];
-  }
+  static const Map<String, Color> fixedCategoryColors = {
+    'comida': Color(0xFFF59E0B), // Ámbar Cálido
+    'transporte': Color(0xFF2563EB), // Azul Royal
+    'entretenimiento': Color(0xFF9333EA), // Púrpura Vibrante
+    'supermercado': Color(0xFF10B981), // Esmeralda
+    'salidas': Color(0xFFF97316), // Naranja Intenso
+    'salud': Color(0xFFE11D48), // Rosa Carmesí / Rojo
+    'servicios': Color(0xFF06B6D4), // Cian Eléctrico
+    'vivienda': Color(0xFF4F46E5), // Índigo Profundo
+    'educacion': Color(0xFF84CC16), // Lima
+    'educación': Color(0xFF84CC16), // Lima
+    'ropa': Color(0xFFD946EF), // Fucsia Magenta
+    'compras': Color(0xFF0D9488), // Teal
+    'viajes': Color(0xFFEA580C), // Naranja Óxido
+    'deportes': Color(0xFF0284C7), // Celeste Cielo
+    'impuestos': Color(0xFF64748B), // Gris Pizarra
+    'otros': Color(0xFF94A3B8), // Gris Neutro
+  };
 
-  static const List<Color> _colors = [
+  static const List<Color> distinctPalette = [
+    Color(0xFF2563EB), // Azul Royal
+    Color(0xFFF59E0B), // Ámbar
+    Color(0xFF9333EA), // Púrpura
+    Color(0xFF10B981), // Esmeralda
+    Color(0xFFE11D48), // Carmesí
+    Color(0xFF06B6D4), // Cian
+    Color(0xFFF97316), // Naranja
+    Color(0xFF4F46E5), // Índigo
+    Color(0xFF84CC16), // Lima
+    Color(0xFFD946EF), // Fucsia
     Color(0xFF0D9488), // Teal
-    Color(0xFF3B82F6), // Blue
-    Color(0xFF8B5CF6), // Purple
-    Color(0xFFEC4899), // Pink
-    Color(0xFFF97316), // Orange
-    Color(0xFF10B981), // Emerald
-    Color(0xFFF59E0B), // Amber
-    Color(0xFF06B6D4), // Cyan
-    Color(0xFF6366F1), // Indigo
-    Color(0xFF14B8A6), // Light Teal
+    Color(0xFFEA580C), // Cobrizo
+    Color(0xFF0284C7), // Sky Blue
+    Color(0xFF64748B), // Slate Gray
+    Color(0xFFB91C1C), // Deep Red
+    Color(0xFF047857), // Forest Green
   ];
+
+  static Color getColorForCategory(String categoryName, [int? fallbackIndex]) {
+    final normalized = categoryName.toLowerCase().trim();
+    if (fixedCategoryColors.containsKey(normalized)) {
+      return fixedCategoryColors[normalized]!;
+    }
+    if (fallbackIndex != null) {
+      return distinctPalette[fallbackIndex % distinctPalette.length];
+    }
+    final hash = normalized.hashCode;
+    return distinctPalette[hash.abs() % distinctPalette.length];
+  }
 }

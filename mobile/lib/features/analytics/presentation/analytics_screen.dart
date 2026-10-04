@@ -217,7 +217,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                       ? (amount / summary.total) * 100
                                       : 0.0;
                                   final radius = isTouched ? 48.0 : 40.0;
-                                  final color = CategoryIcons.getColorForCategory(entry.key);
+                                  final color = CategoryIcons.getColorForCategory(entry.key, i);
 
                                   return PieChartSectionData(
                                     color: color,
@@ -240,8 +240,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                           Wrap(
                             spacing: 12,
                             runSpacing: 8,
-                            children: sortedCategories.map((entry) {
-                              final color = CategoryIcons.getColorForCategory(entry.key);
+                            children: List.generate(sortedCategories.length, (i) {
+                              final entry = sortedCategories[i];
+                              final color = CategoryIcons.getColorForCategory(entry.key, i);
                               final emoji = CategoryIcons.getEmoji(entry.key);
                               return Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -261,7 +262,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                                   ),
                                 ],
                               );
-                            }).toList(),
+                            }),
                           ),
                         ],
                       ),
@@ -420,7 +421,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                             height: 38,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: CategoryIcons.getColorForCategory(catName)
+                              color: CategoryIcons.getColorForCategory(catName, i)
                                   .withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),

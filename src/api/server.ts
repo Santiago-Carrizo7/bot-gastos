@@ -32,7 +32,7 @@ export function createExpressApp(deps: CreateApiRouterDeps): Express {
     }
 
     if (err instanceof AppError) {
-      res.status(400).json({
+      res.status(err.statusCode ?? 400).json({
         error: err.code,
         message: err.message,
       });

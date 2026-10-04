@@ -50,6 +50,13 @@ class DateFormatter {
     return '$month/$year';
   }
 
+  static String getMonthName(int month) {
+    if (month >= 1 && month <= 12) {
+      return monthNames[month - 1];
+    }
+    return '';
+  }
+
   static String toIsoDateOnly(DateTime date) {
     return DateFormat('yyyy-MM-dd').format(date);
   }

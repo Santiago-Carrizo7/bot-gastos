@@ -58,7 +58,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           NavigationDestination(
             icon: Icon(Icons.pie_chart_outline_rounded),
             selectedIcon: Icon(Icons.pie_chart_rounded),
-            label: 'Presupuestos',
+            label: 'Presupuesto',
           ),
           NavigationDestination(
             icon: Icon(Icons.more_horiz_rounded),

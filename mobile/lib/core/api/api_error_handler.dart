@@ -33,6 +33,21 @@ class ApiErrorHandler {
         );
       }
 
+      if (statusCode == 404) {
+        if (data is Map<String, dynamic> && data.containsKey('message') && data['message'] != null) {
+          return ApiException(
+            message: data['message'].toString(),
+            code: data['error']?.toString() ?? 'NOT_FOUND',
+            statusCode: 404,
+          );
+        }
+        return ApiException(
+          message: 'El recurso solicitado no fue encontrado en el servidor (404).',
+          code: 'NOT_FOUND',
+          statusCode: 404,
+        );
+      }
+
       if (data is Map<String, dynamic>) {
         if (data.containsKey('message') && data['message'] != null) {
           return ApiException(

@@ -145,10 +145,63 @@ class ExpenseRepository {
       );
 
       final data = response.data['data'] as Map<String, dynamic>;
-      return MonthlySummaryModel.fromJson(data);
+      final summary = MonthlySummaryModel.fromJson(data);
+
+      // Si el servidor ignoró los parámetros de mes/año (versión antigua en producción)
+      if (year != null && month != null && (summary.year != year || summary.month != month)) {
+        return _computeMonthlySummaryFromExpenses(year: year, month: month);
+      }
+
+      return summary;
     } catch (e) {
+      if (year != null && month != null) {
+        return _computeMonthlySummaryFromExpenses(year: year, month: month);
+      }
       throw ApiErrorHandler.handle(e);
     }
+  }
+
+  Future<MonthlySummaryModel> _computeMonthlySummaryFromExpenses({
+    required int year,
+    required int month,
+  }) async {
+    final startDate = DateTime(year, month, 1);
+    final endDate = DateTime(year, month + 1, 0, 23, 59, 59, 999);
+
+    final expenses = await getExpenses(
+      startDate: startDate,
+      endDate: endDate,
+      limit: 500,
+    );
+
+    double total = 0.0;
+    final catMap = <String, CategorySummaryItem>{};
+
+    for (final exp in expenses) {
+      total += exp.amount;
+      final cat = exp.category.toLowerCase().trim();
+      final current = catMap[cat];
+      if (current != null) {
+        catMap[cat] = CategorySummaryItem(
+          total: current.total + exp.amount,
+          count: current.count + 1,
+        );
+      } else {
+        catMap[cat] = CategorySummaryItem(
+          total: exp.amount,
+          count: 1,
+        );
+      }
+    }
+
+    return MonthlySummaryModel(
+      year: year,
+      month: month,
+      monthName: DateFormatter.getMonthName(month),
+      total: total,
+      count: expenses.length,
+      categories: catMap,
+    );
   }
 
   Future<AnalyticsModel> getAnalytics({int? year, int? month, int monthsCount = 6}) async {
